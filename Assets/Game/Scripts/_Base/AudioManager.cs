@@ -20,6 +20,13 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    private void Start()
+    {
+        if (levelMusic != null && GameManager.Instance.StartLevelMusicOnPlay && !levelMusic.isPlaying)
+        {
+            levelMusic.Play();
+        }
+    }
     public void PlayGameOver()
     {
         levelMusic.Stop();

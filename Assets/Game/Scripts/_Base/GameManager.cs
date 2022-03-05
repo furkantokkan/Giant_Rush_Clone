@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     [Header("Template Settings")]
     [SerializeField] private bool isDebug = true;
 
+    [SerializeField] private bool startLevelMusicOnPlay = false;
+
     [SerializeField] private bool giveInputOnFirstClick = false;
 
     [SerializeField] private bool takeInputCount = false;
@@ -40,6 +42,8 @@ public class GameManager : MonoBehaviour
     public bool UseAppMetrica { get { return useAppMetrica; } }
     public bool UseAppsFlyer { get { return useAppsFlyer; } }
     public bool ClearAllPoolObjectsOnNewLevelLoad { get { return clearAllPoolObjectsOnNewLevelLoad; } }
+    public bool StartLevelMusicOnPlay { get { return startLevelMusicOnPlay; } }
+
 
     public static Action onWinEvent;
     public static Action onLoseEvent;
