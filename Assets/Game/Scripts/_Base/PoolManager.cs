@@ -21,11 +21,17 @@ public class PoolManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        LevelManager.Instance.onNewLevelLoaded += ClearAllObjects;
+        if (GameManager.Instance.ClearAllPoolObjectsOnNewLevelLoad)
+        {
+            LevelManager.onNewLevelLoaded += ClearAllObjects;
+        }
     }
     private void OnDisable()
     {
-        LevelManager.Instance.onNewLevelLoaded -= ClearAllObjects;
+        if (GameManager.Instance.ClearAllPoolObjectsOnNewLevelLoad)
+        {
+            LevelManager.onNewLevelLoaded -= ClearAllObjects;
+        }
     }
     private void Start()
     {

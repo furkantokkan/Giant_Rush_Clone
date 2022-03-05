@@ -18,12 +18,13 @@ public class LevelManager : MonoBehaviour
     private bool isRestarted = false;
 
     private GameObject currentLevel;
+    private GameObject lastLevel;
 
 #pragma warning disable
-    public event Action onNewLevelLoaded;
-    public event Action beforeNewLevelLoad;
-    public Action onWinEvent;
-    public Action onLoseEvent;
+    public static event Action onNewLevelLoaded;
+    public static event Action beforeNewLevelLoad;
+    public static event Action onLevelRendered;
+
 #pragma warning restore
     private bool nextLevelIndexTaked = false;
     private enum levelState
@@ -63,11 +64,23 @@ public class LevelManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        onWinEvent += SaveNextLevelIndex;
+        GameManager.onWinEvent += SaveNextLevelIndex;
     }
     private void OnDisable()
     {
-        onWinEvent -= SaveNextLevelIndex;
+        GameManager.onWinEvent -= SaveNextLevelIndex;
+    }
+    public int GetPlayedLevelCount()
+    {
+        return playedLevelCount + 1;
+    }
+    public GameObject GetLastLevelPrefab()
+    {
+        return lastLevel;
+    }
+    public GameObject GetCurrentLevelPrefab()
+    {
+        return currentLevel;
     }
     private void GetNewLevel(bool newLevel)
     {
@@ -145,20 +158,14 @@ public class LevelManager : MonoBehaviour
             }
         }
     }
-    public GameObject GetCurrentLevelPrefab()
-    {
-        return currentLevel;
-    }
-    public int GetLevel()
-    {
-        return playedLevelCount + 1;
-    }
+
     public void NextLevel()
     {
         GetNewLevel(true);
         beforeNewLevelLoad?.Invoke();
         isRestarted = false;
         nextLevelIndexTaked = false;
+        GameManager.Instance.currentState = GameManager.GameState.BeforeStart;
     }
     [ContextMenu("Next Level Debug")]
     private void NextLevelDebug()
@@ -168,6 +175,7 @@ public class LevelManager : MonoBehaviour
         beforeNewLevelLoad?.Invoke();
         SaveNextLevelIndex();
         GetNewLevel(true);
+        GameManager.Instance.currentState = GameManager.GameState.BeforeStart;
     }
     [ContextMenu("Restart Level Debug")]
     public void RestartLevel()
@@ -175,6 +183,7 @@ public class LevelManager : MonoBehaviour
         beforeNewLevelLoad?.Invoke();
         GetNewLevel(false);
         isRestarted = true;
+        GameManager.Instance.currentState = GameManager.GameState.BeforeStart;
     }
     private void SaveNextLevelIndex()
     {
@@ -199,7 +208,7 @@ public class LevelManager : MonoBehaviour
         {
             index = UnityEngine.Random.Range(0, randomLevels.Count);
 
-            if (lastIndex != index)
+            if (lastIndex != index && randomLevels[index] != lastLevel)
             {
                 lastIndex = index;
                 currentLevelIndex = index;
@@ -214,10 +223,12 @@ public class LevelManager : MonoBehaviour
     {
         if (currentLevel != null)
         {
+            lastLevel = currentLevel;
             Destroy(currentLevel);
         }
         onNewLevelLoaded?.Invoke();
         currentLevel = Instantiate(newLevel, Vector3.zero, Quaternion.identity);
+        StartCoroutine(CheckIsLevelRendered(currentLevel));
     }
     private void SetKeys(int levelIndex, int stateIndex)
     {
@@ -232,5 +243,14 @@ public class LevelManager : MonoBehaviour
         PlayerPrefs.DeleteAll();
         currentLevelIndex = 0;
         currentLevelState = levelState.Tutorial;
+    }
+
+    private IEnumerator CheckIsLevelRendered(GameObject level)
+    {
+        while (!level.GetComponent<Renderer>().isVisible)
+        {
+            yield return null;
+        }
+        onLevelRendered?.Invoke();
     }
 }

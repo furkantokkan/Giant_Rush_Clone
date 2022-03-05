@@ -105,9 +105,9 @@ public class AppMetrica : MonoBehaviour
     }
     private void OnEnable ()
     {
-        LevelManager.Instance.onNewLevelLoaded += OnGameStart;
-        LevelManager.Instance.onWinEvent += OnGameFinish;
-        LevelManager.Instance.onLoseEvent += OnGameFinish;
+        LevelManager.onNewLevelLoaded += OnGameStart;
+        GameManager.onWinEvent += OnGameFinish;
+        GameManager.onLoseEvent += OnGameFinish;
 
         if (ExceptionsReporting) {
 #if UNITY_5 || UNITY_5_3_OR_NEWER
@@ -120,9 +120,9 @@ public class AppMetrica : MonoBehaviour
 
     private void OnDisable ()
     {
-        LevelManager.Instance.onNewLevelLoaded -= OnGameStart;
-        LevelManager.Instance.onWinEvent -= OnGameFinish;
-        LevelManager.Instance.onLoseEvent -= OnGameFinish;
+        LevelManager.onNewLevelLoaded -= OnGameStart;
+        GameManager.onWinEvent -= OnGameFinish;
+        GameManager.onLoseEvent -= OnGameFinish;
 
         if (ExceptionsReporting) {
 #if UNITY_5 || UNITY_5_3_OR_NEWER

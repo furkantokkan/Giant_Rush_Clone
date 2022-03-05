@@ -27,31 +27,31 @@ public class UIManager : MonoBehaviour
     private float deltaTime;
     private int inputCounter = 0;
     private bool isUpdating = false;
-    private void Start()
+    private void Awake()
     {
         onGameStartUI?.Invoke();
         UpdateLevelText();
 
-        if (Application.isEditor && !menuObject.activeInHierarchy)
+        if (GameManager.Instance.IsDebug && !menuObject.activeInHierarchy)
         {
-            GameManager.Instance.GameStarted = true;
+            GameManager.Instance.currentState = GameManager.GameState.Normal;
         }
     }
     private void OnEnable()
     {
-        LevelManager.Instance.onWinEvent += ExecuteOnWin;
-        LevelManager.Instance.onNewLevelLoaded += UpdateLevelText;
-        LevelManager.Instance.onLoseEvent += ExecuteOnLose;
-        LevelManager.Instance.onNewLevelLoaded += ForceToClose;
+        GameManager.onWinEvent += ExecuteOnWin;
+        LevelManager.onNewLevelLoaded += UpdateLevelText;
+        GameManager.onLoseEvent += ExecuteOnLose;
+        LevelManager.onNewLevelLoaded += ForceToClose;
         InputManager.Instance.onTouchStart += CloseTheMenu;
     }
 
     private void OnDisable()
     {
-        LevelManager.Instance.onWinEvent -= ExecuteOnWin;
-        LevelManager.Instance.onLoseEvent -= ExecuteOnLose;
-        LevelManager.Instance.onNewLevelLoaded -= UpdateLevelText;
-        LevelManager.Instance.onNewLevelLoaded -= ForceToClose;
+        GameManager.onWinEvent -= ExecuteOnWin;
+        GameManager.onLoseEvent -= ExecuteOnLose;
+        LevelManager.onNewLevelLoaded -= UpdateLevelText;
+        LevelManager.onNewLevelLoaded -= ForceToClose;
         InputManager.Instance.onTouchStart -= CloseTheMenu;
     }
 
@@ -85,12 +85,15 @@ public class UIManager : MonoBehaviour
     }
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (GameManager.Instance.IsDebug)
         {
-            ScreenshotHandler.TakeScreenshotOnGame();
-        }
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                ScreenshotHandler.TakeScreenshotOnGame();
+            }
 
-        ShowFPS();
+            ShowFPS();
+        }
     }
 
     /// <summary>
@@ -117,6 +120,20 @@ public class UIManager : MonoBehaviour
 
         praiseAnim.SetTrigger("Text");
     }
+
+    [ContextMenu("Show Random Praise Text Debug")]
+    private void ShowRandomPraiseTextDebug()
+    {
+        Animator praiseAnim = praiseText.GetComponent<Animator>();
+
+        if (!praiseAnim.IsInTransition(0) && praiseAnim.GetCurrentAnimatorStateInfo(0).IsName("PraiseTextAnimation"))
+        {
+            return;
+        }
+        praiseText.text = GetRandomWord();
+        praiseAnim.SetTrigger("Text");
+    }
+
     public string GetRandomWord()
     {
         int index = UnityEngine.Random.Range(0, praiseWords.Length);
@@ -125,21 +142,44 @@ public class UIManager : MonoBehaviour
     private void ForceToClose()
     {
         inputCounter = 0;
+        GameManager.Instance.GiveInputToUser = false;
+        SetMenuOnNewLevelLoad();
         forceToCloseOnNewLevel?.Invoke();
+
+    }
+    private void SetMenuOnNewLevelLoad()
+    {
+        if (GameManager.Instance.ShowMenuOnNewSceneLoaded)
+        {
+            menuObject.gameObject.SetActive(true);
+        }
+        else
+        {
+            inputCounter = 1;
+        }
     }
     private void CloseTheMenu()
     {
-        inputCounter++;
+        if (GameManager.Instance.TakeInputCount || inputCounter < 3)
+        {
+            inputCounter++;
+        }
 
         if (inputCounter >= 1 && menuObject.activeInHierarchy)
         {
             menuObject.gameObject.SetActive(false);
         }
-        if (inputCounter >= 1)
+
+        if (inputCounter >= 1 && inputCounter < 3)
         {
-            GameManager.Instance.GameStarted = true;
+            GameManager.Instance.currentState = GameManager.GameState.Normal;
+
+            if (GameManager.Instance.GiveInputOnFirstClick)
+            {
+                GameManager.Instance.GiveInputToUser = true;
+            }
         }
-        else if (inputCounter >= 2)
+        if (inputCounter >= 2 && inputCounter < 3 && !GameManager.Instance.GiveInputOnFirstClick)
         {
             GameManager.Instance.GiveInputToUser = true;
         }
@@ -152,14 +192,16 @@ public class UIManager : MonoBehaviour
     }
     private void UpdateLevelText()
     {
-        levelText.text = "Level" + " " + LevelManager.Instance.GetLevel().ToString();
+        levelText.text = "Level" + " " + LevelManager.Instance.GetPlayedLevelCount().ToString();
     }
     private void ExecuteOnWin()
     {
+        GameManager.Instance.currentState = GameManager.GameState.Victory;
         onWinUI?.Invoke();
     }
     private void ExecuteOnLose()
     {
+        GameManager.Instance.currentState = GameManager.GameState.Failed;
         onLoseUI?.Invoke();
     }
 }
