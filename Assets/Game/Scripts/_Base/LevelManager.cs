@@ -7,6 +7,7 @@ public class LevelManager : MonoBehaviour
     private static LevelManager instance;
     public static LevelManager Instance { get { return instance; } }
 
+    [SerializeField] private GameObject prototypeScene = null;
     [SerializeField] private List<GameObject> tutorialLevels = new List<GameObject>();
     [SerializeField] private List<GameObject> orderedLevels = new List<GameObject>();
     [SerializeField] private List<GameObject> randomLevels = new List<GameObject>();
@@ -52,15 +53,28 @@ public class LevelManager : MonoBehaviour
     }
     void Start()
     {
-        if (currentLevelState != levelState.Random)
+        if (!GameManager.Instance.IsDebug)
         {
-            GetNewLevel(false);
+            prototypeScene = null;
+        }
+
+        if (prototypeScene == null)
+        {
+            if (currentLevelState != levelState.Random)
+            {
+                GetNewLevel(false);
+            }
+            else
+            {
+                //oyun kapatýlý açýnca farklý level gelsin diyorsanýz true yapýn
+                GetNewLevel(false);
+            }
         }
         else
         {
-            //oyun kapatýlý açýnca farklý level gelsin diyorsanýz true yapýn
-            GetNewLevel(false);
+            SpawnNewLevel(prototypeScene);
         }
+
     }
     private void OnEnable()
     {
